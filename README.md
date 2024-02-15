@@ -14,5 +14,3 @@ we pray we pass
 ### Bootstrap
 - https://getbootstrap.com/docs/5.3/getting-started/introduction/
 - https://getbootstrap.com/docs/5.3/examples/
-
-# Credits
