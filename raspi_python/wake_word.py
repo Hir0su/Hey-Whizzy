@@ -30,7 +30,8 @@ def start_listening(wake_word, recognizer, microphone):
     with microphone as source:
         print("Listening for wake word...")
         recognizer.adjust_for_ambient_noise(source)
-        audio = recognizer.listen(source, timeout=5)
+        # audio = recognizer.listen(source, timeout=5)
+        audio = recognizer.listen(source)
 
     # Call the listen function with the provided arguments
     return listen(recognizer, audio, wake_word)
