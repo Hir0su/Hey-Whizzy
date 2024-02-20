@@ -28,6 +28,10 @@ sudo apt upgrade
 sudo apt-get update
 sudo apt-get install python3-pip
 sudo apt-get install python3-venv
+```
+
+### Get python directory
+```
 (Get-Command python).Source #this is to get python directory
 ```
 
