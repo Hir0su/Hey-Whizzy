@@ -1,6 +1,6 @@
 # Capstone-IT07
  Capstone Project of:
-Andrei Magbuhat, John Tiu , Neil Guingcangco, Owen Santos
+Andrei Magbuhat, John Tiu, Neil Guingcangco, and Owen Santos
 
 
 
@@ -11,6 +11,30 @@ we pray we pass
 
 # Links
 
-### Bootstrap
+## Bootstrap
 - https://getbootstrap.com/docs/5.3/getting-started/introduction/
 - https://getbootstrap.com/docs/5.3/examples/
+
+## What to install in raspi
+
+### Updating the software of raspi
+```
+sudo apt update
+sudo apt upgrade
+```
+
+### Updating python for raspi
+```
+sudo apt-get update
+sudo apt-get install python3-pip
+sudo apt-get install python3-venv
+(Get-Command python).Source #this is to get python directory
+```
+
+### Installation of python libraries for raspi
+```
+pip install SpeechRecognition
+pip install pyaudio
+pip install google-generativeai
+pip install pyttsx3
+```
