@@ -1,13 +1,9 @@
-# Capstone-IT07
- Capstone Project of:
+# Hey Whizzy
+## Capstone 2023IT07
+Capstone Project of:
 Andrei Magbuhat, John Tiu, Neil Guingcangco, and Owen Santos
 
-
-
-
-
-
-we pray we pass
+We pray we pass!
 
 # Links
 
