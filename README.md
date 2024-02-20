@@ -32,7 +32,7 @@ sudo apt-get install python3-venv
 
 ### Get python directory
 ```
-(Get-Command python).Source #this is to get python directory
+(Get-Command python).Source
 ```
 
 ### Installation of python libraries for raspi
