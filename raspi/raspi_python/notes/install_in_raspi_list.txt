@@ -1,0 +1,23 @@
+What to install in raspi
+sudo apt update
+sudo apt upgrade
+
+sudo apt-get update
+sudo apt-get install python3-pip
+sudo apt-get install python3-venv
+(Get-Command python).Source #this is to get python directory
+
+pip install SpeechRecognition
+pip install pyaudio
+pip install google-generativeai
+pip install pyttsx3
+pip install psutil
+pip install pygame
+
+
+pip install Flask
+pip install Flask-MySQLdb
+
+pip install pillow
+
+
