@@ -39,3 +39,9 @@ pip install google-generativeai
 pip install pyttsx3
 pip install psutil
 ```
+
+### Installation of Flask
+```
+pip install flask
+pip install Flask-MySQLdb
+```
