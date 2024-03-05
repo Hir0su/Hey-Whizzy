@@ -26,140 +26,117 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # Route for file upload
-@app.route('/upload', methods=['POST'])
-def upload_file():
+@app.route('/upload_form', methods=['POST'])
+def upload_data():
     if request.method == 'POST':
         file = request.files.get('file')
-        if file:
+        question = request.form.get('question')
+        answer = request.form.get('answer')
+        
+        if file and question and answer:
             filename = file.filename
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             # Insert file path into database
             cur = mysql.connection.cursor()
+            cur.execute("INSERT INTO faqs (question, answer) VALUES (%s, %s)", (question, answer))
             cur.execute("INSERT INTO files (file_path, files_name) VALUES (%s, %s)", (filepath, filename))
             mysql.connection.commit()
             cur.close()
-            return jsonify({'message': 'File uploaded successfully'}), 200
+            return jsonify({'message': 'Submission uploaded successfully'}), 200
         else:
             return jsonify({'message': 'No file provided'}), 400
 
-# Route for adding FAQs
-@app.route('/add_faq', methods=['POST'])
-def add_faq():
-    if request.method == 'POST':
-        question = request.form.get('question')
-        answer = request.form.get('answer')
-        if question and answer:
-            # Insert FAQ into database
-            cur = mysql.connection.cursor()
-            cur.execute("INSERT INTO faqs (question, answer) VALUES (%s, %s)", (question, answer))
-            mysql.connection.commit()
-            cur.close()
-            return jsonify({'message': 'FAQ added successfully'}), 200
-        else:
-            return jsonify({'message': 'No question or answer provided'}), 400
-        
-# Route to fetch files/images
-@app.route('/fetch_data')
-def fetch_data():
+# Route to fetch data eg.Files/images,Faq/Answers for index.html
+@app.route('/fetch_form')
+def fetch_form():
     cur = mysql.connection.cursor()
     cur.execute("SELECT file_path FROM files")
     files = cur.fetchall()
-    cur.close()
-    return render_template('readFile.html', files=files)
-
-# Route to fetch FAQ/Answers
-@app.route('/fetch_faqs')
-def fetch_faqs():
-    cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM faqs")
     faqs = cur.fetchall()
     cur.close()
-    return render_template('readFaqText.html', faqs=faqs)
+    return render_template('index.html', files=files, faqs=faqs)
 
-# Route to fetch the FAQs/Answers for editFaq.html
-@app.route('/fetch_archive_faqs')
-def fetch_archive_faqs():
+# Route to fetch data eg. Files/images, Faq/Answers for editEvents.html
+@app.route('/fetch_events')
+def fetch_events():
     cur = mysql.connection.cursor()
+    cur.execute("SELECT file_path FROM files")
+    files = cur.fetchall()
     cur.execute("SELECT * FROM faqs")
     faqs = cur.fetchall()
-    return render_template('editFaq.html', faqs=faqs)
+    cur.close()
+    return render_template('editEvents.html', files=files, faqs=faqs)
 
-# Route to archive FAQs from "faqs" table
-@app.route('/archive_faq/<string:answer>', methods=['POST'])
-def archive_faq(answer):
-    cur = mysql.connection.cursor()
-    # Retrieve FAQ data from faqs table based on answer
-    cur.execute("SELECT * FROM faqs WHERE answer = %s", (answer,))
-    faq_data = cur.fetchone()
-    if faq_data:
-        # Retrieve FAQ data from faqs table based on answer
-        cur.execute("INSERT INTO archived_faqs (archived_question, archived_answer) VALUES (%s, %s)", (faq_data[1], faq_data[2]))
-        mysql.connection.commit()
-        # Delete FAQ data from faqs table based on answer
-        cur.execute("DELETE FROM faqs WHERE answer = %s", (answer,))
-        mysql.connection.commit()
-        cur.close()
-        return jsonify({'message': 'FAQ archived successfully'}), 200
-    else:
-        cur.close()
-        return jsonify({'message': 'FAQ not found'}), 404
-
-
-
-# Route to fetch the images/files from "files" table for the editFile.html
+# Route to fetch data from Archive database for restoreFile.html
 @app.route('/fetch_archive')
 def fetch_archive():
     cur = mysql.connection.cursor()
-    cur.execute("SELECT file_path, files_name FROM files")
-    files = cur.fetchall()
+    cur.execute("SELECT archived_file_path FROM archived_data")
+    archived_files = cur.fetchall()
+    cur.execute("SELECT * FROM archived_faqs")
+    archived_faqs = cur.fetchall()
     cur.close()
-    return render_template('editFile.html', files=files)
+    return render_template('restoreFile.html', archived_files=archived_files, archived_faqs=archived_faqs)
+    
 
-# Route to archive files from "files" table for the editFile.html
-@app.route('/archive_file/<filename>', methods=['POST'])
-def archive_file(filename):
-    cur = mysql.connection.cursor()
-    # Retrieve file data from files table
-    cur.execute("SELECT * FROM files WHERE files_name = %s", (filename,))
-    file_data = cur.fetchone()
-    if file_data:
-        # Retrieve file data from files table based on filename
-        cur.execute("INSERT INTO archived_data (archived_files_name, archived_file_path) VALUES (%s, %s)", (file_data[2], file_data[1]))
-        mysql.connection.commit()
-        # Delete file data from files table
-        cur.execute("DELETE FROM files WHERE file_id = %s", (file_data[0],))  # Assuming file_id is the first column
-        mysql.connection.commit()
-        cur.close()
-        return jsonify({'message': 'File archived successfully'}), 200
-    else:
-        cur.close()
-        return jsonify({'message': 'File not found'}), 404
+# Route for Archiving in editEvents.html
+@app.route('/archive_data', methods=['POST'])
+def archive_data():
+    try:
+        with mysql.connection.cursor() as cursor:
+            # Archive data from 'faqs' table to 'archived_faqs' table
+            cursor.execute("INSERT INTO archived_faqs (archived_question, archived_answer) SELECT question, answer FROM faqs")
+            cursor.execute("DELETE FROM faqs")  # Remove data from original table
+            mysql.connection.commit()
+
+            # Archive data from 'files' table to 'archived_data' table
+            cursor.execute("INSERT INTO archived_data (archived_files_name, archived_file_path) SELECT files_name, file_path FROM files")
+            cursor.execute("DELETE FROM files")  # Remove data from original table
+            mysql.connection.commit()
+
+        return jsonify({"message": "Data archived successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Route for Restoring files from archive database
+@app.route('/restore_data', methods=['POST'])
+def restore_data():
+    try:
+        with mysql.connection.cursor() as cursor:
+            # Restore data from 'archived_faqs' to 'faqs' table
+            cursor.execute("INSERT INTO faqs (question, answer) SELECT archived_question, archived_answer FROM archived_faqs")
+            cursor.execute("DELETE FROM archived_faqs") # Remove data from original table
+            mysql.connection.commit()
+            
+            # Archive data from 'files' table to 'archived_data' table
+            cursor.execute("INSERT INTO files (files_name, file_path) SELECT archived_files_name, archived_file_path FROM archived_data")
+            cursor.execute("DELETE FROM archived_data") # Remove data from original table
+            mysql.connection.commit()
+            
+        return jsonify({"message": "Data restored successfully"}), 200
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return fetch_form() # Fetch data before rendering the template
+
+@app.route('/editEvents')
+def editEvents():
+    return fetch_events() # Fetch data before rendering the template
+
+@app.route('/restoreFile')
+def restoreFile():
+    return fetch_archive() # Fetch data before rendering the template
 
 @app.route('/addFile')
 def addFile():
     return render_template('addFile.html')
-
-@app.route('/editFile')
-def editFile():
-    return fetch_archive() # Fetch data before rendering the template
-
-@app.route('/editFaq')
-def editFaq():
-    return fetch_archive_faqs() # Fetch data before rendering the template
-
-@app.route('/readFile')
-def readFile():
-    return fetch_data()  # Fetch data before rendering the template
-
-@app.route('/readFaq')
-def readFaqText():
-    return fetch_faqs() # Fetch data before rendering the template
 
 @app.route('/login')
 def login():

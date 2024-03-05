@@ -186,9 +186,18 @@
           <a class="nav-link" href="#">Link</a>
         </li>
         <li class="nav-item">
+          <a class="nav-link" href="/restoreFile">Restore</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="/login">Login</a>
         </li>
       </ul>
+      
+      <!-- SEARCH BUTTON IS HERE FOR REFERENCE -->
+     <form class="d-flex" role="search" id="searchForm">
+      <input class="form-control me-2" type="search" placeholder="Enter search query" aria-label="Search">
+      <button class="btn btn-outline-success" type="submit">Search</button>
+    </form>
     </div>
   </div>
 </nav>
@@ -198,12 +207,8 @@
     <h1>CCO Testing</h1>
     <p class="lead">Placeholder area to where we can upload files to database</p>
     <!-- BUTTONS GO HERE -->
-    <a class="btn btn-lg btn-primary" href="/readFile" role="button">Read Events &raquo;</a>
-    <a class="btn btn-lg btn-primary" href="/readFaq" role="button">Read FAQs &raquo;</a>
     <a class="btn btn-lg btn-primary" href="/addFile" role="button">Add &raquo;</a>
-    <a class="btn btn-lg btn-primary" href="/editFile" role="button">Edit Events &raquo;</a>
-    <a class="btn btn-lg btn-primary" href="/editFaq" role="button">Edit FAQs &raquo;</a>
-<!--     <a class="btn btn-lg btn-primary" href="archiveFile.html" role="button">Archive &raquo;</a> -->
+    <a class="btn btn-lg btn-primary" href="/editEvents" role="button">Edit &raquo;</a>
   </div>
   
 </main>
@@ -211,47 +216,28 @@
 
 <!-- IMAGE CARDS -->
 <div class="album py-5 bg-body-tertiary">
-    <div class="container">
-
-      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-        <div class="col">
-          <div class="card shadow-sm">
-            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-            <div class="card-body">
-              <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-body-secondary">9 mins</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card shadow-sm">
-            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-            <div class="card-body">
-              <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-body-secondary">9 mins</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card shadow-sm">
-            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-            <div class="card-body">
-              <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-body-secondary">9 mins</small>
-              </div>
+  <div class="container">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+      {% for file in files %}
+      {% for faq in faqs %}
+      <div class="col">
+        <div class="card shadow-sm">
+          <img src="{{ url_for('uploaded_file', filename=file[0].replace('uploads\\', '')) }}" class="bd-placeholder-img card-img-top" width="100%" height="225" alt="Thumbnail">
+          <div class="card-body">
+            <h3 class="mb-0">{{ faq[1] }}</h3>
+            <div class="d-flex justify-content-between align-items-center">
+              <p class="card-text mb-auto">{{ faq[2] }}</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-
-
-
+      {% endfor %}
+      {% endfor %}
     </body>
+
+    <!--JavaScript-->
+    <script>
+      
+    </script>
+
 </html>
