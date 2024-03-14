@@ -14,7 +14,6 @@ ls = dir in windows
 cd = cd in windows
 code . = to run vs code on the selected directory
 
-
 # things to update globally
 sudo apt-get install portaudio19-dev
 sudo apt-get install flac
@@ -27,6 +26,13 @@ pip install --upgrade pip
 pip install --upgrade pip setuptools
 pip install wheel
 pip install pyaudio
+
+# check this out to fix ALSA errors on raspi
+# https://github.com/Uberi/speech_recognition/issues/182
+# things to install to fix such errors (when venv is activated)
+pip install sounddevice
+# remember to put this on the .py files if you need speech_recognition running 
+import sounddevice
 
 # if there is error on pip package installation (when venv is activated)
 pip cache purge
