@@ -20,6 +20,7 @@ sudo apt-get install flac
 sudo apt-get install alsa-utils
 sudo apt-get install pulseaudio pulseaudio-utils
 sudo apt-get install libasound2-dev
+sudo apt-get install espeak
 
 # things to update inside the venv (when venv is activated)
 pip install --upgrade pip
