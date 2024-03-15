@@ -4,12 +4,13 @@ import speech_to_text
 import conversation_gemini
 import text_to_speech
 import get_prompt
+import sounddevice
 
 def start():
 
     # Specify the microphone index (use microphone_list.py)
     # index 1 is usually the primary device used
-    mic_index = 1  # Change this to the mic to use
+    mic_index = 2  # Change this to the mic to use
     
     # -------------------------------------------------------------
     # Step 1 - wake word

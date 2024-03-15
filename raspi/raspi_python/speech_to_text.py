@@ -1,4 +1,5 @@
 import speech_recognition as sr
+import sounddevice
 
 def recognize_speech(mic_index):
     recognizer = sr.Recognizer()
