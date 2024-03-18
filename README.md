@@ -44,4 +44,5 @@ pip install psutil
 ```
 pip install flask
 pip install Flask-MySQLdb
+pip install werkzeug
 ```
