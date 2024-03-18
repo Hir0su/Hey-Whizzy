@@ -27,6 +27,7 @@ pip install --upgrade pip
 pip install --upgrade pip setuptools
 pip install wheel
 pip install pyaudio
+pip install git+https://github.com/openai/whisper.git soundfile
 
 # check this out to fix ALSA errors on raspi
 # https://github.com/Uberi/speech_recognition/issues/182
