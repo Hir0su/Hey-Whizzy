@@ -21,6 +21,7 @@ sudo apt-get install alsa-utils
 sudo apt-get install pulseaudio pulseaudio-utils
 sudo apt-get install libasound2-dev
 sudo apt-get install espeak
+sudo apt-get install espeak-ng
 
 # things to update inside the venv (when venv is activated)
 pip install --upgrade pip
@@ -28,6 +29,11 @@ pip install --upgrade pip setuptools
 pip install wheel
 pip install pyaudio
 pip install git+https://github.com/openai/whisper.git soundfile
+pip install vosk
+
+# to use vosk
+place the vosk model at the same folder of initialize.py
+name the vosk model folder -> 'model'
 
 # check this out to fix ALSA errors on raspi
 # https://github.com/Uberi/speech_recognition/issues/182
