@@ -16,9 +16,14 @@ def get_response(command):
     Now answer the following lines.
     """
     # custom = "Please respond in 2 sentences max and make your answers brief."
-    response = model.generate_content(f"{custom} {command}")
-    output = response.text
-    return output
+    try:
+        response = model.generate_content(f"{custom} {command}")
+        output = response.text
+        print(output)
+        return output
+    except:
+        output = "Sorry I couldn't help you with that."
+        return output
 
 def start_prompt(command):
     setup()

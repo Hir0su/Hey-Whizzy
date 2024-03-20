@@ -27,7 +27,7 @@ def start():
         if prompt_type == 1: 
             # Step 3a -  get answer from db
             command = speech_to_text.recognize_speech(mic_index)
-            print("connecting to db")
+            print("Connecting to DB")
         elif prompt_type == 2: 
             # Step 3b.1 - speech-to-text 
             command = speech_to_text.recognize_speech(mic_index)

@@ -43,7 +43,7 @@ def get_prompt(prompt):
 
     if prompt is not None:
         for keyword, index in keywords.items():
-            if keyword in prompt.lower():
+            if keyword in prompt.lower().strip():
                 if index == 1:
                     prompt_school()
                     return index
@@ -64,6 +64,7 @@ def get_prompt(prompt):
 def main_func(mic_index):
     greetings()
     user_prompt = speech_to_text.recognize_speech(mic_index)
-    print(user_prompt)
+    print(f"get_prompt.py: {user_prompt}")
     prompt_type = get_prompt(user_prompt)
+    print(prompt_type)
     return prompt_type
