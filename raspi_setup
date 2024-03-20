@@ -30,6 +30,8 @@ pip install wheel
 pip install pyaudio
 pip install git+https://github.com/openai/whisper.git soundfile
 pip install vosk
+pip install setuptools_rust
+pip install TTS
 
 # to use vosk
 place the vosk model at the same folder of initialize.py
