@@ -22,6 +22,7 @@ sudo apt-get install pulseaudio pulseaudio-utils
 sudo apt-get install libasound2-dev
 sudo apt-get install espeak
 sudo apt-get install espeak-ng
+sudo apt-get install flite
 
 # things to update inside the venv (when venv is activated)
 pip install --upgrade pip
