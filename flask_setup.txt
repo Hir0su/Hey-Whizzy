@@ -1,0 +1,12 @@
+# for flask
+
+- run xampp
+- run raspi_flask.py
+
+
+# changes made for it to work on the network
+
+- run xampp on admin
+- allow python on the firewall (on searchbar "allow")
+- change code on app.run(debug=True, host='0.0.0.0')
+- make sure all devices are connected on the same network
