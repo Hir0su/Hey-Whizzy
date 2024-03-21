@@ -89,7 +89,8 @@ def listen(mic_index):
         "hey wizzy hey wizzy",
         "play weezy",
         "play weezy play weezy",
-        "hey easy"
+        "hey easy",
+        "hey rese"
     ]
 
     with microphone as source:

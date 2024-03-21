@@ -1,5 +1,6 @@
 import pyttsx3
-import os
+import subprocess
+import simpleaudio
 
 # def start_speaking(output):
 #     # Uses text-to-speech to speak the provided text.
@@ -22,22 +23,22 @@ import os
 #     engine.runAndWait()
 
 def start_speaking(output, voice='rms', pitch=60, speed=300, volume=100):
-    """
-    Convert text to speech using flite.
 
-    Parameters:
-        text (str): The text to be converted to speech.
-        voice (str): The name of the voice to use. Default is 'rms'.
-        pitch (int): The pitch of the voice (range: 0-99). Default is 50. 50-90
-        speed (int): The speed of speech (range: 60-500). Default is 170. 60-500
-        volume (int): The volume of the speech (range: 0-100). Default is 100. 0-100
-    """
+    # Change the command to create output.wav
+    command = f"echo \"{output}\" | ./piper/piper --model en_US-joe-medium.onnx --output_file output.wav"
 
-    # available voices in flite: 
-    # kal awb_time kal16 awb rms slt
+    # Change the current working directory
+    cwd = "/home/whizzy/my_project_venv/Hey-Whizzy-main/raspi/piper"
 
-    os.system(f"flite -voice {voice} -t \"{output}\" -o temp.wav")
-    os.system(f"aplay -q temp.wav")  # Assuming you're on a Linux system and using ALSA for audio playback
+    # Run the command
+    subprocess.run(command, shell=True, cwd=cwd)
+
+    # Play the output.wav file
+    wave_obj = simpleaudio.WaveObject.from_wave_file(f"{cwd}/output.wav")
+    play_obj = wave_obj.play()
+
+    # Wait for the audio to finish playing
+    play_obj.wait_done()
 
 def no_pick_up():
     reply = "Sorry, I didn't quite hear you well."
