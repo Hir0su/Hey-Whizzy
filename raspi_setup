@@ -35,6 +35,7 @@ pip install setuptools_rust
 pip install TTS
 pip install scipy
 pip install simpleaudio
+pip install Flask-MySQLdb
 
 # installing piper tts
 wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz
