@@ -4,6 +4,7 @@ import speech_to_text
 import conversation_gemini
 import text_to_speech
 import get_prompt
+import fetch_request
 import sounddevice
 
 def start():
@@ -27,7 +28,8 @@ def start():
         if prompt_type == 1: 
             # Step 3a -  get answer from db
             command = speech_to_text.recognize_speech(mic_index)
-            print("Connecting to DB")
+            output = fetch_request.post_command(command)
+            text_to_speech.start_speaking(output)
         elif prompt_type == 2: 
             # Step 3b.1 - speech-to-text 
             command = speech_to_text.recognize_speech(mic_index)

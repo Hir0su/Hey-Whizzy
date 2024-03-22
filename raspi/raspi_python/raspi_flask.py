@@ -1,4 +1,4 @@
-from flask import Flask, request ,render_template, jsonify, send_from_directory
+from flask import Flask, request, render_template, jsonify, send_from_directory
 import os
 from flask_mysqldb import MySQL
 
@@ -13,12 +13,12 @@ app.config['MYSQL_DB'] = 'testwhizzy'
 # Initialize MySQL
 mysql = MySQL(app)
 
-@app.route('/fetch_data')
-def fetch_data():
+@app.route('/raspi_fetch')
+def raspi_fetch():
     user_input = request.args.get('user_input')  # Get the user input from request
     if user_input:
         cur = mysql.connection.cursor()
-        cur.execute("SELECT answer FROM your_table WHERE question = %s", (user_input,))
+        cur.execute("SELECT answer FROM faqs WHERE question = %s", (user_input,))
         answer = cur.fetchone()
         cur.close()
         
@@ -30,4 +30,4 @@ def fetch_data():
         return "No user input provided."
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

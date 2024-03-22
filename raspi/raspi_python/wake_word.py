@@ -95,6 +95,7 @@ def listen(mic_index):
 
     with microphone as source:
         recognizer.adjust_for_ambient_noise(source)
+        print("check 0")
         
         try:
             print("[1]Listening for wake word...")

@@ -29,6 +29,7 @@ def recognize_speech(mic_index):
       
     with microphone as source:
         recognizer.adjust_for_ambient_noise(source)
+        print("check 0")
 
         try:
             print("[2]Listening for audio...")
