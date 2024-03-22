@@ -79,8 +79,8 @@ wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.g
 ```
 Create a folder named piper, extract this on the folder.
 Then download the voice model and json file.
-https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/joe/medium/en_US-joe-medium.onnx?download=true
-https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/joe/medium/en_US-joe-medium.onnx.json
+- https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/joe/medium/en_US-joe-medium.onnx?download=true
+- https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/joe/medium/en_US-joe-medium.onnx.json
 
 Ctrl + S on the .json file to save it because there is download button for this.
 Reminder on the piper execution, you need the script to be /piper/piper.
