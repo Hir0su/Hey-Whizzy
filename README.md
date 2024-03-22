@@ -96,15 +96,23 @@ Name the vosk model folder -> 'model'.
 https://github.com/Uberi/speech_recognition/issues/182
 
 ### Things to install to fix such errors (when venv is activated)
-```pip install sounddevice```
+```
+pip install sounddevice
+```
 Remember to put this on the .py files if you need speech_recognition running.
-```import sounddevice```
+```
+import sounddevice
+```
 
 ### If there is error on pip package installation (when venv is activated)
-```pip cache purge```
+```
+pip cache purge
+```
 
 ### Mic problems outside coding
-```alsamixer```
+```
+alsamixer
+```
 Use on the terminal to select default mic
 
 ## Bootstrap
