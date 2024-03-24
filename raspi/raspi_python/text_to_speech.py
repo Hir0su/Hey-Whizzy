@@ -2,27 +2,15 @@ import pyttsx3
 import subprocess
 import simpleaudio
 
-# def start_speaking(output):
-#     # Uses text-to-speech to speak the provided text.
-#     print(output)
+# Tkinter imports
+import tkinter as tk
 
-#     engine = pyttsx3.init()
+# Global variables to store the Tkinter root and label widget
+root = None
+output_label = None
 
-#     # Set the voice
-#     voices = engine.getProperty('voices')
-#     engine.setProperty('voice', voices[11].id)  # You can change the index to select a different voice
-
-#     # Set the speech rate (words per minute)
-#     engine.setProperty('rate', 170)  # Adjust the rate as needed
-
-#     # Set the volume (0.0 to 1.0)
-#     engine.setProperty('volume', 1.0)  # Adjust the volume as needed
-    
-#     # Speak the text
-#     engine.say(output)
-#     engine.runAndWait()
-
-def start_speaking(output, voice='rms', pitch=60, speed=300, volume=100):
+def start_speaking(output):
+    global root, output_label
 
     # Change the command to create output.wav
     command = f"echo \"{output}\" | ./piper/piper --model en_US-joe-medium.onnx --output_file output.wav"
