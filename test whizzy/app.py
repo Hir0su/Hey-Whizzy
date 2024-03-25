@@ -1,5 +1,5 @@
 from flask import Flask, request ,render_template, jsonify, send_from_directory, session, redirect
-import os
+import os, re
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -30,7 +30,6 @@ app.static_folder = 'static'
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# Route for file upload
 @app.route('/upload_form', methods=['POST'])
 def upload_data():
     if request.method == 'POST':
@@ -38,15 +37,20 @@ def upload_data():
         question = request.form.get('question')
         answer = request.form.get('answer')
         category_id = request.form.get('category')
-        
-        if file and question and answer and category_id:
-            filename = file.filename
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            # Insert file path into database
+
+        if question and answer and category_id:
+            # Insert question, answer, and category_id into database
             cur = mysql.connection.cursor()
             cur.execute("INSERT INTO faqs (question, answer, category_id) VALUES (%s, %s, %s)", (question, answer, category_id))
-            cur.execute("INSERT INTO files (file_path, files_name, category_id) VALUES (%s, %s, %s)", (filepath, filename, category_id))
+            mysql.connection.commit()
+
+            # If a file was uploaded, save it and insert its path into the database
+            if file:
+                filename = file.filename
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+                cur.execute("INSERT INTO files (file_path, files_name, category_id) VALUES (%s, %s, %s)", (filepath, filename, category_id))
+
             mysql.connection.commit()
             cur.close()
             return jsonify({'message': 'Submission uploaded successfully'}), 200
@@ -118,17 +122,45 @@ def check_session():
     return jsonify({'status': 'active'})
 
 
-# Route to fetch data eg.Files/images,Faq/Answers for index.html
+# Route to fetch data eg.Files/images,Faq/Answers for index.html it also includes the search function
 @app.route('/fetch_form')
 def fetch_form():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT file_path FROM files")
-    files = cur.fetchall()
-    cur.execute("SELECT * FROM faqs")
-    faqs = cur.fetchall()
-    cur.close()
-    return render_template('index.html', files=files, faqs=faqs)
+    query = request.args.get('q', '').strip()  # Get the search query from the request
+    keywords = query.split()  # Split the query into individual keywords
 
+    if keywords:
+        cur = mysql.connection.cursor()
+        conditions = []
+        for keyword in keywords:
+            # Escape the keyword to treat special characters as literals
+            escaped_keyword = re.escape(keyword)
+            
+            # Create conditions with and without special characters
+            condition_without_special_chars = f"fq.question LIKE '%{keyword}%'"
+            condition_with_special_chars = f"fq.question LIKE '%{escaped_keyword}%'"
+            
+            # Add both conditions to the list
+            conditions.append(condition_without_special_chars)
+            conditions.append(condition_with_special_chars)
+        
+        conditions_str = " OR ".join(conditions)
+        cur.execute(f"SELECT f.file_path, fq.question, fq.answer, fq.category_id "
+                    f"FROM faqs fq "
+                    f"LEFT JOIN files f ON fq.faq_id = f.category_id "
+                    f"WHERE {conditions_str}")
+        search_results = cur.fetchall()
+        cur.close()
+        return render_template('index.html', files=search_results, faqs=search_results)
+    else:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT file_path FROM files")
+        files = cur.fetchall()
+        cur.execute("SELECT * FROM faqs")
+        faqs = cur.fetchall()
+        cur.close()
+        return render_template('index.html', files=files, faqs=faqs)
+    
+    
 # Route to fetch category data
 @app.route('/fetch_categories')
 def fetch_categories():
@@ -229,6 +261,7 @@ def restore_data():
     except Exception as e:
         print(f"Error restoring data: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 
 @app.route('/')
