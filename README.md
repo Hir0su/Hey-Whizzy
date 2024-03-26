@@ -72,6 +72,7 @@ pip install scipy
 pip install simpleaudio
 pip install Flask-MySQLdb
 pip install pillow
+pip install imageio
 ```
 
 ### Installing Piper TTS
