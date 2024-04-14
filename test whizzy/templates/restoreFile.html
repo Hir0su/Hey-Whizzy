@@ -202,22 +202,21 @@
 <div class="album py-5 bg-body-tertiary">
   <div class="container">
       <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-          {% for faq in archived_faqs %}
-          {% set file_index = loop.index0 %}
+          {% for entry in archived_entries %}
           <div class="col">
               <div class="card shadow-sm">
-                {% if archived_files and file_index < archived_files|length %}
-                  <img src="{{ url_for('uploaded_file', filename=archived_files[file_index][0].replace('uploads\\', '')) }}" class="bd-placeholder-img card-img-top" width="100%" height="225" alt="Thumbnail">
+                  {% if entry[0] %}
+                  <img src="{{ url_for('uploaded_file', filename=entry[3].replace('uploads\\', '')) }}" class="bd-placeholder-img card-img-top" width="100%" height="225" alt="Thumbnail">
                   {% else %}
                   <img src="{{ url_for('static', filename='placeholder.png') }}" class="bd-placeholder-img card-img-top" width="100%" height="225" alt="Placeholder">
                   {% endif %}
                   <div class="card-body">
-                      <h3 class="mb-0">{{ faq[1] }}</h3>
+                      <h3 class="mb-0">{{ entry[1] }}</h3>
                       <div class="d-flex justify-content-between align-items-center">
-                          <p class="card-text mb-auto">{{ faq[2] }}</p>
+                          <p class="card-text mb-auto">{{ entry[2] }}</p>
                           <div class="btn-group">
-                              <!-- Pass the FAQ ID to the data-faq-id attribute -->
-                              <button type="button" class="btn btn-sm btn-outline-success restore-btn" data-faq-id="{{ faq[0] }}">Restore</button>
+                              <!-- Pass the entry ID to the data-entry-id attribute -->
+                              <button type="button" class="btn btn-sm btn-outline-success restore-btn" data-entry-id="{{ entry[0] }}">Restore</button>
                           </div>
                       </div>
                   </div>
@@ -235,14 +234,14 @@
       const restoreButtons = document.querySelectorAll('.restore-btn');
       restoreButtons.forEach(function(button) {
           button.addEventListener('click', function() {
-              const faqId = this.getAttribute('data-faq-id');
+              const entryId = this.getAttribute('data-entry-id');
               // Send POST request to restore_data route
               fetch('/restore_data', {
                   method: 'POST',
                   headers: {
                       'Content-Type': 'application/json'
                   },
-                  body: JSON.stringify({ faqId: faqId })
+                  body: JSON.stringify({ entryId: entryId })
               })
               .then(response => {
                   if (response.ok) {

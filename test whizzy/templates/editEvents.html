@@ -197,74 +197,71 @@
   </div>
 </nav> 
 
-
 <!-- IMAGE CARDS -->
 <div class="album py-5 bg-body-tertiary">
   <div class="container">
-      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-          {% for faq in faqs %}
-          {% set file_index = loop.index0 %}
-          <div class="col">
-              <div class="card shadow-sm">
-                {% if files and file_index < files|length %}
-                  <img src="{{ url_for('uploaded_file', filename=files[file_index][0].replace('uploads\\', '')) }}" class="bd-placeholder-img card-img-top" width="100%" height="225" alt="Thumbnail">
-                  {% else %}
-                  <img src="{{ url_for('static', filename='placeholder.png') }}" class="bd-placeholder-img card-img-top" width="100%" height="225" alt="Placeholder">
-                  {% endif %}
-                  <div class="card-body">
-                      <h3 class="mb-0">{{ faq[1] }}</h3>
-                      <div class="d-flex justify-content-between align-items-center">
-                          <p class="card-text mb-auto">{{ faq[2] }}</p>
-                          <div class="btn-group">
-                              <!-- Pass the file ID to the data-file-id attribute -->
-                              <button type="button" class="btn btn-sm btn-outline-danger archive-btn" data-faq-id="{{ faq[0] }}">Archive</button>
-                          </div>
-                      </div>
-                  </div>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+      {% for entry in entries %}
+      <div class="col">
+        <div class="card shadow-sm">
+          {% if entry[0] %}
+          <img src="{{ url_for('uploaded_file', filename=entry[3].replace('uploads\\', '')) }}" class="bd-placeholder-img card-img-top" width="100%" height="225" alt="Thumbnail">
+          {% else %}
+          <img src="{{ url_for('static', filename='placeholder.png') }}" class="bd-placeholder-img card-img-top" width="100%" height="225" alt="Placeholder">
+          {% endif %}
+          <div class="card-body">
+            <h3 class="mb-0">{{ entry[1] }}</h3>
+            <div class="d-flex justify-content-between align-items-center">
+              <p class="card-text mb-auto">{{ entry[2] }}</p>
+              <div class="btn-group">
+                <!-- Pass the entry ID to the data-entry-id attribute -->
+                <button type="button" class="btn btn-sm btn-outline-danger archive-btn" data-entry-id="{{ entry[0] }}">Archive</button>
               </div>
+            </div>
           </div>
-          {% endfor %}
+        </div>
       </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
+
 
 <!-- JavaScript for Archive Button -->
 <script>
   document.addEventListener("DOMContentLoaded", function() {
-      // Add event listener to each archive button
-      const archiveButtons = document.querySelectorAll('.archive-btn');
-      archiveButtons.forEach(function(button) {
-          button.addEventListener('click', function() {
-              const faqId = this.getAttribute('data-faq-id');
-              // Send POST request to archive_data route
-              fetch('/archive_data', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({ faqId: faqId })
-              })
-              .then(response => {
-                  if (response.ok) {
-                      return response.json();
-                  } else {
-                      throw new Error('Error archiving data');
-                  }
-              })
-              .then(data => {
-                  alert(data.message); // Display success message
-                  window.location.reload(); //Reload the page
-              })
-              .catch(error => {
-                  console.error('Error:', error);
-                  alert('An error occurred while archiving data');
-              });
-          });
+    // Add event listener to each archive button
+    const archiveButtons = document.querySelectorAll('.archive-btn');
+    archiveButtons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        const entryId = this.getAttribute('data-entry-id');
+        // Send POST request to archive_data route
+        fetch('/archive_data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ entryId: entryId })
+        })
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            throw new Error('Error archiving data');
+          }
+        })
+        .then(data => {
+          alert(data.message); // Display success message
+          window.location.reload(); //Reload the page
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred while archiving data');
+        });
       });
+    });
   });
 </script>
-
-        
 
 
       </body>
