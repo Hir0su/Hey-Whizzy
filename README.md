@@ -127,6 +127,7 @@ Use on the terminal to select default mic
 pip install flask
 pip install Flask-MySQLdb
 pip install werkzeug
+pip install Flask-Mail
 ```
 
 ### Server preparation
