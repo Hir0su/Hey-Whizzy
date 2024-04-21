@@ -56,6 +56,7 @@ sudo apt-get install libasound2-dev
 sudo apt-get install espeak
 sudo apt-get install espeak-ng
 sudo apt-get install flite
+sudo apt-get install python3-pyqt5
 ```
 
 ### Things to update inside the venv (when venv is activated)
