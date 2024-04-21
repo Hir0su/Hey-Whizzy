@@ -74,6 +74,8 @@ pip install simpleaudio
 pip install Flask-MySQLdb
 pip install pillow
 pip install imageio
+pip install PyQt-builder
+pip install pyqt5
 ```
 
 ### Installing Piper TTS
