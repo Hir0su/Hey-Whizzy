@@ -36,6 +36,7 @@ pip install TTS
 pip install scipy
 pip install simpleaudio
 pip install Flask-MySQLdb
+pip install flask-socketio
 
 # things to install for react.js
 # download using nvm (choices) for the above command
