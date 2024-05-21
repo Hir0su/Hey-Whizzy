@@ -44,6 +44,7 @@ https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-di
 # in the raspi_python folder
 npx create-react-app frontend
 npm install axios
+npm install socket.io-client
 
 # installing piper tts
 wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz
