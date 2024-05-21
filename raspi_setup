@@ -37,6 +37,13 @@ pip install scipy
 pip install simpleaudio
 pip install Flask-MySQLdb
 
+# things to install for react.js
+# download using nvm (choices) for the above command
+https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions-1
+# in the raspi_python folder
+npx create-react-app frontend
+npm install axios
+
 # installing piper tts
 wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz
 # create a folder named piper, extract this on the folder
