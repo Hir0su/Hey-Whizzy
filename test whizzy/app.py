@@ -1,5 +1,6 @@
-from flask import Flask, request ,render_template, jsonify, send_from_directory, session, redirect
-import os, re
+from flask import Flask, request ,render_template, jsonify, send_from_directory, session, redirect, url_for, flash
+import os, re, smtplib, secrets, string
+from email.mime.text import MIMEText
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -12,7 +13,7 @@ app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'testwhizzy'
-app.secret_key = 'owen'  # Set a secret key for session handling
+app.secret_key = 'owensecret'  # Set a secret key for session handling
 
 
 # Initialize MySQL
@@ -22,7 +23,7 @@ mysql = MySQL(app)
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Route for serving static files
+# Route for serving static files eg. CSS/JS files
 app.static_folder = 'static'
 
 # Route for accessing uploaded files
@@ -39,17 +40,17 @@ def upload_data():
         category_id = request.form.get('category')
 
         if question and answer and category_id:
-            # Insert question, answer, and category_id into database
+            # Insert question, answer, and category_id into the "entries" table
             cur = mysql.connection.cursor()
-            cur.execute("INSERT INTO faqs (question, answer, category_id) VALUES (%s, %s, %s)", (question, answer, category_id))
-            mysql.connection.commit()
+            cur.execute("INSERT INTO entries (question, answer, category_id) VALUES (%s, %s, %s)", (question, answer, category_id))
+            entry_id = cur.lastrowid  # Get the auto-generated entry_id
 
-            # If a file was uploaded, save it and insert its path into the database
+            # If a file was uploaded, save it and update the "entries" table with the file details
             if file:
                 filename = file.filename
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(filepath)
-                cur.execute("INSERT INTO files (file_path, files_name, category_id) VALUES (%s, %s, %s)", (filepath, filename, category_id))
+                cur.execute("UPDATE entries SET file_name = %s, file_path = %s WHERE entry_id = %s", (filename, filepath, entry_id))
 
             mysql.connection.commit()
             cur.close()
@@ -107,6 +108,89 @@ def register():
     
     return render_template('register.html')
 
+# Route for Forgot password
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+
+        if email:
+            # Check if the email exists in the database
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+            user = cur.fetchone()
+
+            if user:
+                # Generate a random token
+                token = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
+
+                # Store the token in the database
+                cur.execute("UPDATE users SET reset_token = %s WHERE email = %s", (token, email))
+                mysql.connection.commit()
+
+                # Construct the email message
+                reset_url = url_for('reset_password', token=token, _external=True)
+                msg = MIMEText(f'Please click the following link to reset your password: {reset_url}')
+                msg['Subject'] = 'Password Reset Request'
+                msg['From'] = 'Whizzy'
+                msg['To'] = email
+
+                try:
+                    # Send the email
+                    smtp_server = smtplib.SMTP('smtp.gmail.com', 587)
+                    smtp_server.starttls()
+                    smtp_server.login('2023it07@gmail.com', 'knpn ssqa wedd dvuy')
+                    smtp_server.send_message(msg)
+                    smtp_server.quit()
+                    flash('An email has been sent with instructions to reset your password.', 'success')
+                except smtplib.SMTPException as e:
+                    print(f"SMTP Error: {str(e)}")
+                    flash('An error occurred while sending the email. Please try again later.', 'error')
+            else:
+                flash('The email address you entered is not registered.', 'error')
+
+            cur.close()
+        else:
+            flash('Please enter your email address.', 'error')
+
+    return render_template('PasswordReset.html')
+
+# Route for Reset Password
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if request.method == 'POST':
+        new_password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+
+        if new_password == confirm_password:
+            # Check if the token is valid
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT user_id FROM users WHERE reset_token = %s", (token,))
+            user = cur.fetchone()
+
+            if user:
+                user_id = user[0]  # Assuming the first column is the user_id
+
+                try:
+                    # Update the user's password
+                    hashed_password = generate_password_hash(new_password)
+                    cur.execute("UPDATE users SET password = %s, reset_token = NULL WHERE user_id = %s", (hashed_password, user_id))
+                    mysql.connection.commit()
+                    flash('Your password has been reset successfully.', 'success')
+                    return redirect(url_for('login'))
+                except Exception as e:
+                    print(f"Error resetting password: {str(e)}")
+                    flash('An error occurred while resetting your password. Please try again later.', 'error')
+            else:
+                flash('The password reset link is invalid or has expired.', 'error')
+
+            cur.close()
+        else:
+            flash('The new password and confirmation password do not match.', 'error')
+
+    return render_template('PasswordReset.html', token=token)
+
+
 # Route for checking session time
 @app.route('/check_session')
 def check_session():
@@ -136,30 +220,46 @@ def fetch_form():
             escaped_keyword = re.escape(keyword)
             
             # Create conditions with and without special characters
-            condition_without_special_chars = f"fq.question LIKE '%{keyword}%'"
-            condition_with_special_chars = f"fq.question LIKE '%{escaped_keyword}%'"
+            condition_without_special_chars = f"e.question LIKE '%{keyword}%'"
+            condition_with_special_chars = f"e.question LIKE '%{escaped_keyword}%'"
             
             # Add both conditions to the list
             conditions.append(condition_without_special_chars)
             conditions.append(condition_with_special_chars)
         
         conditions_str = " OR ".join(conditions)
-        cur.execute(f"SELECT f.file_path, fq.question, fq.answer, fq.category_id "
-                    f"FROM faqs fq "
-                    f"LEFT JOIN files f ON fq.faq_id = f.category_id "
+        cur.execute(f"SELECT e.file_path, e.file_name, e.question, e.answer, e.category_id "
+                    f"FROM entries e "
                     f"WHERE {conditions_str}")
         search_results = cur.fetchall()
         cur.close()
-        return render_template('index.html', files=search_results, faqs=search_results)
+        return render_template('index.html', entries=search_results)
     else:
         cur = mysql.connection.cursor()
-        cur.execute("SELECT file_path FROM files")
-        files = cur.fetchall()
-        cur.execute("SELECT * FROM faqs")
-        faqs = cur.fetchall()
+        cur.execute("SELECT file_path, file_name, question, answer, category_id FROM entries")
+        entries = cur.fetchall()
         cur.close()
-        return render_template('index.html', files=files, faqs=faqs)
-    
+        return render_template('index.html', entries=entries)
+
+
+# Route to fetch data eg. Files/images, Faq/Answers for editEvents.html
+@app.route('/fetch_events')
+def fetch_events():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT entry_id, question, answer, file_name, file_path, category_id FROM entries")
+    entries = cur.fetchall()
+    cur.close()
+    return render_template('editEvents.html', entries=entries)
+
+# Route to fetch data from Archive database for restoreFile.html
+@app.route('/fetch_archive')
+def fetch_archive():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT ar_entry_id, archived_question, archived_answer, archived_file_name, archived_file_path, category_id FROM archived_entries")
+    archived_entries = cur.fetchall()
+    cur.close()
+    return render_template('restoreFile.html', archived_entries=archived_entries)
+
     
 # Route to fetch category data
 @app.route('/fetch_categories')
@@ -169,57 +269,35 @@ def fetch_categories():
     categories = cur.fetchall()
     cur.close()
     return jsonify(categories)
-
-
-# Route to fetch data eg. Files/images, Faq/Answers for editEvents.html
-@app.route('/fetch_events')
-def fetch_events():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT file_path, category_id FROM files")
-    files = cur.fetchall()
-    cur.execute("SELECT * FROM faqs")
-    faqs = cur.fetchall()
-    cur.close()
-    return render_template('editEvents.html', files=files, faqs=faqs)
-
-# Route to fetch data from Archive database for restoreFile.html
-@app.route('/fetch_archive')
-def fetch_archive():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT archived_file_path, category_id FROM archived_data")
-    archived_files = cur.fetchall()
-    cur.execute("SELECT * FROM archived_faqs")
-    archived_faqs = cur.fetchall()
-    cur.close()
-    return render_template('restoreFile.html', archived_files=archived_files, archived_faqs=archived_faqs)
     
 
-# Route for Archiving in editEvents.html
+# Route for Archiving files from entries table.
 @app.route('/archive_data', methods=['POST'])
 def archive_data():
     try:
-        faq_id = request.json['faqId']  # Get the FAQ ID from the request payload
+        entry_id = request.json['entryId']  # Get the Entry ID from the request payload
         
-        print(f"Archiving data for FAQ ID: {faq_id}")
+        print(f"Archiving data for entry ID: {entry_id}")
         
         with mysql.connection.cursor() as cursor:
-            # Archive specific entry from 'faqs' table to 'archived_faqs' table
-            cursor.execute("INSERT INTO archived_faqs (archived_question, archived_answer, category_id) SELECT question, answer, category_id FROM faqs WHERE faq_id = %s", (faq_id,))
-            print("Archived FAQ entry")
-            
-            cursor.execute("DELETE FROM faqs WHERE faq_id = %s", (faq_id,))  # Remove specific entry from original table
-            print("Deleted FAQ entry from original table")
-            
-            mysql.connection.commit()
-
-            # Archive specific entry from 'files' table to 'archived_data' table
-            cursor.execute("INSERT INTO archived_data (archived_files_name, archived_file_path, category_id) SELECT files_name, file_path, category_id FROM files WHERE file_id = %s", (faq_id,))
-            print("Archived file entry")
-            
-            cursor.execute("DELETE FROM files WHERE file_id = %s", (faq_id,))  # Remove specific entry from original table
-            print("Deleted file entry from original table")
-            
-            mysql.connection.commit()
+            try:
+                # Archive specific entry from 'entries' table to 'archived_entries' table
+                cursor.execute("INSERT INTO archived_entries (archived_question, archived_answer, archived_file_name, archived_file_path, category_id) SELECT question, answer, file_name, file_path, category_id FROM entries WHERE entry_id = %s", (entry_id,))
+                print("Archived Entry")
+                
+                # Check if any rows were affected by the INSERT statement
+                if cursor.rowcount == 0:
+                    raise ValueError(f"No entry found with ID: {entry_id}")
+                
+                cursor.execute("DELETE FROM entries WHERE entry_id = %s", (entry_id,))  # Remove specific entry from original table
+                print("Deleted Entry from original table")
+                
+                mysql.connection.commit()
+                
+            except Exception as e:
+                print(f"Error archiving data: {str(e)}")
+                mysql.connection.rollback()  # Rollback the transaction if an error occurs
+                raise e
 
         print("Data archived successfully")
         return jsonify({"message": "Data archived successfully"}), 200
@@ -227,31 +305,23 @@ def archive_data():
     except Exception as e:
         print(f"Error archiving data: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
+    
+    
 # Route for Restoring files from archive database
 @app.route('/restore_data', methods=['POST'])
 def restore_data():
     try:
-        faq_id = request.json['faqId']  # Get the FAQ ID from the request payload
+        entry_id = request.json['entryId']  # Get the entry ID from the request payload
         
-        print(f"Restoring data for FAQ ID: {faq_id}")
+        print(f"Restoring data for entry ID: {entry_id}")
         
         with mysql.connection.cursor() as cursor:
-            # Restore specific entry from 'archived_faqs' to 'faqs' table
-            cursor.execute("INSERT INTO faqs (question, answer, category_id) SELECT archived_question, archived_answer, category_id FROM archived_faqs WHERE ar_faq_id = %s", (faq_id,))
-            print("Restored FAQ entry")
+            # Restore specific entry from 'archived_entries' to 'entries' table
+            cursor.execute("INSERT INTO entries (question, answer, file_name, file_path, category_id) SELECT archived_question, archived_answer, archived_file_name, archived_file_path, category_id FROM archived_entries WHERE ar_entry_id = %s", (entry_id,))
+            print("Restored Entry")
             
-            cursor.execute("DELETE FROM archived_faqs WHERE ar_faq_id = %s", (faq_id,))  # Remove specific entry from archive table
-            print("Deleted FAQ entry from archive table")
-            
-            mysql.connection.commit()
-            
-            # Restore specific entry from 'archived_data' to 'files' table
-            cursor.execute("INSERT INTO files (files_name, file_path, category_id) SELECT archived_files_name, archived_file_path, category_id FROM archived_data WHERE ar_data_id = %s", (faq_id,))
-            print("Restored file entry")
-            
-            cursor.execute("DELETE FROM archived_data WHERE ar_data_id = %s", (faq_id,))  # Remove specific entry from archive table
-            print("Deleted file entry from archive table")
+            cursor.execute("DELETE FROM archived_entries WHERE ar_entry_id = %s", (entry_id,))  # Remove specific entry from archive table
+            print("Deleted entry from archived_entries table")
             
             mysql.connection.commit()
         
