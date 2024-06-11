@@ -1,7 +1,12 @@
-# for flask
+# for flask that host the db connection to raspi
 
-- run xampp
+- run xampp with admin privilage
 - run raspi_flask.py
+- make sure that the request has the right ip address and port of the flask host
+- ex. 192.168.0.15:5000
+
+
+-------------------------------------------------------------------------------------
 
 
 # changes made for it to work on the network
