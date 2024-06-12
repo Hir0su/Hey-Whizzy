@@ -1,9 +1,15 @@
 from flask import Flask, request ,render_template, jsonify, send_from_directory, session, redirect, url_for, flash
-import os, re, smtplib, secrets, string
+import os, smtplib, secrets, string
+import numpy as np
 from email.mime.text import MIMEText
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+from text_preprocessing import preprocess_text
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from functools import wraps
+
 
 
 app = Flask(__name__, static_folder='static')
@@ -26,11 +32,26 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Route for serving static files eg. CSS/JS files
 app.static_folder = 'static'
 
+# Global variables to store updated TF-IDF vectors and vectorizer
+updated_vectorizer = None
+updated_question_vectors = None
+
 # Route for accessing uploaded files
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+# Function to check if the user is logged in
+def login_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if 'logged_in' in session and session['logged_in']:
+            return func(*args, **kwargs)
+        else:
+            return redirect(url_for('login'))
+    return wrapper
+
+# Route for uploading files to the database
 @app.route('/upload_form', methods=['POST'])
 def upload_data():
     if request.method == 'POST':
@@ -210,55 +231,243 @@ def check_session():
 @app.route('/fetch_form')
 def fetch_form():
     query = request.args.get('q', '').strip()  # Get the search query from the request
-    keywords = query.split()  # Split the query into individual keywords
+    category_id = request.args.get('category', '')  # Get the selected category (if any)
+    cur = mysql.connection.cursor()
 
-    if keywords:
-        cur = mysql.connection.cursor()
-        conditions = []
-        for keyword in keywords:
-            # Escape the keyword to treat special characters as literals
-            escaped_keyword = re.escape(keyword)
-            
-            # Create conditions with and without special characters
-            condition_without_special_chars = f"e.question LIKE '%{keyword}%'"
-            condition_with_special_chars = f"e.question LIKE '%{escaped_keyword}%'"
-            
-            # Add both conditions to the list
-            conditions.append(condition_without_special_chars)
-            conditions.append(condition_with_special_chars)
-        
-        conditions_str = " OR ".join(conditions)
-        cur.execute(f"SELECT e.file_path, e.file_name, e.question, e.answer, e.category_id "
-                    f"FROM entries e "
-                    f"WHERE {conditions_str}")
-        search_results = cur.fetchall()
-        cur.close()
-        return render_template('index.html', entries=search_results)
+    # Fetch questions, answers, and file details from the database
+    if category_id:
+        cur.execute("SELECT question, answer, file_name, file_path FROM entries WHERE category_id = %s", (category_id,))
+    else:
+        cur.execute("SELECT question, answer, file_name, file_path FROM entries")
+
+    faqs = cur.fetchall()
+    questions = [faq[0] for faq in faqs]
+    answers = [faq[1] for faq in faqs]
+    file_names = [faq[2] for faq in faqs]
+    file_paths = [faq[3] for faq in faqs]
+
+    # Preprocess the questions
+    preprocessed_questions = [preprocess_text(question) for question in questions]
+
+    # Use the updated TF-IDF vectors if available, else create new ones
+    if updated_vectorizer is not None and updated_question_vectors is not None:
+        vectorizer = updated_vectorizer
+        question_vectors = updated_question_vectors
+    else:
+        vectorizer = TfidfVectorizer()
+        question_vectors = vectorizer.fit_transform(preprocessed_questions)
+
+    if query:
+        # Preprocess the user's query
+        preprocessed_query = preprocess_text(query)
+
+        # Calculate the similarity between the user's query and the database questions
+        user_query_vector = vectorizer.transform([preprocessed_query])
+        similarities = cosine_similarity(user_query_vector, question_vectors)
+
+        # Get the index of the most similar question
+        most_similar_index = np.argmax(similarities)
+
+        # Set a similarity threshold
+        similarity_threshold = 0.7
+
+        if similarities[0][most_similar_index] > similarity_threshold:
+            best_match_answer = answers[most_similar_index]
+            best_match_file_name = file_names[most_similar_index]
+            best_match_file_path = file_paths[most_similar_index]
+            search_results = [(best_match_file_path, best_match_file_name, questions[most_similar_index], best_match_answer, None)]
+        else:
+            search_results = []
+            best_match_answer = "I'm sorry, I don't understand your question. Could you please rephrase?"
+
+        return render_template('index.html', entries=search_results, query=query, answer=best_match_answer)
     else:
         cur = mysql.connection.cursor()
-        cur.execute("SELECT file_path, file_name, question, answer, category_id FROM entries")
+        if category_id:
+            cur.execute("SELECT file_path, file_name, question, answer, category_id FROM entries WHERE category_id = %s", (category_id,))
+        else:
+            cur.execute("SELECT file_path, file_name, question, answer, category_id FROM entries")
         entries = cur.fetchall()
         cur.close()
         return render_template('index.html', entries=entries)
+    
+# Route to recalculate the TF-IDF vectors
+@app.route('/update_tfidf', methods=['POST'])
+def update_tfidf():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT question, answer FROM entries")
+    faqs = cur.fetchall()
+    questions = [faq[0] for faq in faqs]
+    cur.close()
+
+    # Preprocess the questions
+    preprocessed_questions = [preprocess_text(question) for question in questions]
+
+    # Create TF-IDF vectors for the preprocessed questions
+    vectorizer = TfidfVectorizer()
+    question_vectors = vectorizer.fit_transform(preprocessed_questions)
+
+    # Store the updated TF-IDF vectors and vectorizer instance
+    global updated_vectorizer, updated_question_vectors
+    updated_vectorizer = vectorizer
+    updated_question_vectors = question_vectors
+
+    return jsonify({'message': 'TF-IDF vectors updated successfully'})
 
 
 # Route to fetch data eg. Files/images, Faq/Answers for editEvents.html
 @app.route('/fetch_events')
 def fetch_events():
+    query = request.args.get('q', '').strip()  # Get the search query from the request
+    category_id = request.args.get('category', '')  # Get the selected category (if any)
     cur = mysql.connection.cursor()
-    cur.execute("SELECT entry_id, question, answer, file_name, file_path, category_id FROM entries")
+    
+    
+    # Fetch category names
+    cur.execute("SELECT category_id, category_name FROM category")
+    category_map = {category[0]: category[1] for category in cur.fetchall()}
+
+    # Fetch questions, answers, and file details from the database
+    if category_id:
+        cur.execute("SELECT entry_id, question, answer, file_name, file_path, category_id FROM entries WHERE category_id = %s", (category_id,))
+    else:
+        cur.execute("SELECT entry_id, question, answer, file_name, file_path, category_id FROM entries")
+
     entries = cur.fetchall()
     cur.close()
-    return render_template('editEvents.html', entries=entries)
+
+    if query:
+        # Preprocess the questions
+        preprocessed_questions = [preprocess_text(entry[1]) for entry in entries]
+
+        # Use the updated TF-IDF vectors if available, else create new ones
+        if updated_vectorizer is not None and updated_question_vectors is not None:
+            vectorizer = updated_vectorizer
+            question_vectors = updated_question_vectors
+        else:
+            vectorizer = TfidfVectorizer()
+            question_vectors = vectorizer.fit_transform(preprocessed_questions)
+
+        # Preprocess the user's query
+        preprocessed_query = preprocess_text(query)
+
+        # Calculate the similarity between the user's query and the database questions
+        user_query_vector = vectorizer.transform([preprocessed_query])
+        similarities = cosine_similarity(user_query_vector, question_vectors)
+
+        # Get the index of the most similar question
+        most_similar_index = np.argmax(similarities)
+
+        # Set a similarity threshold
+        similarity_threshold = 0.7
+
+        if similarities[0][most_similar_index] > similarity_threshold:
+            best_match = entries[most_similar_index]
+            search_results = [best_match]
+        else:
+            search_results = []
+
+        cur.close()
+        return render_template('editEvents.html', entries=search_results, query=query, category_map=category_map)
+    else:
+        cur.close()
+        return render_template('editEvents.html', entries=entries, category_map=category_map)
 
 # Route to fetch data from Archive database for restoreFile.html
 @app.route('/fetch_archive')
 def fetch_archive():
+    query = request.args.get('q', '').strip()  # Get the search query from the request
     cur = mysql.connection.cursor()
     cur.execute("SELECT ar_entry_id, archived_question, archived_answer, archived_file_name, archived_file_path, category_id FROM archived_entries")
     archived_entries = cur.fetchall()
     cur.close()
-    return render_template('restoreFile.html', archived_entries=archived_entries)
+
+    if query:
+        # Preprocess the query
+        preprocessed_query = preprocess_text(query)
+
+        # Use the updated TF-IDF vectors if available, else create new ones
+        if updated_vectorizer is not None and updated_question_vectors is not None:
+            vectorizer = updated_vectorizer
+            question_vectors = updated_question_vectors
+        else:
+            vectorizer = TfidfVectorizer()
+            questions = [entry[1] for entry in archived_entries]
+            preprocessed_questions = [preprocess_text(question) for question in questions]
+            question_vectors = vectorizer.fit_transform(preprocessed_questions)
+
+        # Calculate the similarity between the user's query and the archived questions
+        user_query_vector = vectorizer.transform([preprocessed_query])
+        similarities = cosine_similarity(user_query_vector, question_vectors)
+
+        # Get the index of the most similar question
+        most_similar_index = np.argmax(similarities)
+
+        # Set a similarity threshold
+        similarity_threshold = 0.7
+
+        if similarities[0][most_similar_index] > similarity_threshold:
+            best_match = archived_entries[most_similar_index]
+            search_results = [best_match]
+        else:
+            search_results = []
+
+        return render_template('restoreFile.html', archived_entries=search_results, query=query)
+    else:
+        return render_template('restoreFile.html', archived_entries=archived_entries)
+
+# Route to edit the entry in editFile.html
+@app.route('/edit_entry', methods=['GET'])
+def edit_entry():
+    entry_id = request.args.get('entryId')
+    if entry_id:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT question, answer, file_name, file_path FROM entries WHERE entry_id = %s", (entry_id,))
+        entry = cur.fetchone()
+        cur.close()
+        if entry:
+            file_name = entry[2]
+            file_path = entry[3]
+            return jsonify({"question": entry[0], "answer": entry[1], "file_name": file_name, "file_path": file_path})
+        else:
+            return jsonify({"error": "Entry not found"}), 404
+    else:
+        return jsonify({"error": "Entry ID is required"}), 400
+
+# Route to update the entry in editFile.html
+@app.route('/update_entry', methods=['POST'])
+def update_entry():
+    data = request.form
+    entry_id = data.get('entryId')
+    question = data.get('question')
+    answer = data.get('answer')
+    file = request.files.get('file')
+
+    if entry_id and question and answer:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT file_name FROM entries WHERE entry_id = %s", (entry_id,))
+        existing_file_name = cur.fetchone()[0]
+
+        if file:
+            filename = file.filename
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+
+            # Remove the existing file if it exists
+            if existing_file_name:
+                existing_file_path = os.path.join(app.config['UPLOAD_FOLDER'], existing_file_name)
+                if os.path.isfile(existing_file_path):
+                    os.remove(existing_file_path)
+
+            cur.execute("UPDATE entries SET question = %s, answer = %s, file_name = %s, file_path = %s WHERE entry_id = %s", (question, answer, filename, filepath, entry_id))
+        else:
+            cur.execute("UPDATE entries SET question = %s, answer = %s WHERE entry_id = %s", (question, answer, entry_id))
+
+        mysql.connection.commit()
+        cur.close()
+        return jsonify({"message": "Entry updated successfully"})
+    else:
+        return jsonify({"error": "Invalid data"}), 400
 
     
 # Route to fetch category data
@@ -342,6 +551,7 @@ def home():
         return redirect('/login')  # Redirect to the login page if not logged in
 
 @app.route('/index')
+@login_required
 def index():
     if 'logged_in' in session and session['logged_in']:
         return fetch_form()  # Fetch data before rendering the template
@@ -349,25 +559,30 @@ def index():
         return redirect('/login')  # Redirect to the login page if not logged 
     
 @app.route('/logout')
+@login_required
 def logout():
     session.clear()  # Clear all session data
     return redirect('/login')  # Redirect to the login page
 
 @app.route('/editEvents')
+@login_required
 def editEvents():
     return fetch_events() # Fetch data before rendering the template
 
 @app.route('/restoreFile')
+@login_required
 def restoreFile():
     return fetch_archive() # Fetch data before rendering the template
 
 @app.route('/addFile')
+@login_required
 def addFile():
     return render_template('addFile.html')
 
 @app.route('/login_page')
+@login_required
 def login_page():
     return render_template('login.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
