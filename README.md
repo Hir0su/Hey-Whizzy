@@ -9,7 +9,7 @@ Andrei Magbuhat, John Tiu, Neil Guingcangco, and Owen Santos.
 
 We pray we pass!
 
-[Hey Whizzy](https://github.com/Hir0su/Hey-Whizzy-Admin-Website)'s Admin website repo
+[Hey Whizzy's Admin Website Repository](https://github.com/Hir0su/Hey-Whizzy-Admin-Website)
 
 # Guide
 
