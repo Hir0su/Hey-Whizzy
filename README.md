@@ -1,9 +1,11 @@
 # Hey Whizzy
 ## Capstone 2023IT07
 Capstone Project of:
-Andrei Magbuhat, John Tiu, Neil Guingcangco, and Owen Santos
+Andrei Magbuhat (@andododo), John Tiu(@cookiekyu), Neil Guingcangco(@Potatodes), and Owen Santos(@Hir0su)
 
 We pray we pass!
+
+[Hey Whizzy](https://github.com/Hir0su/Hey-Whizzy-Admin-Website)'s Admin website repo
 
 # Guide
 
