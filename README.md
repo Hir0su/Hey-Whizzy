@@ -78,11 +78,24 @@ pip install TTS
 pip install scipy
 pip install simpleaudio
 pip install Flask-MySQLdb
+pip install flask-socketio
 pip install pillow
 pip install imageio
-pip install PyQt-builder
-pip install pyqt5
 ```
+
+### Installing React.js
+Download using nvm (choices) for the above command
+- https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions-1
+
+In the raspi_python folder:
+```
+npx create-react-app frontend
+npm install axios
+npm install socket.io-client
+```
+A README file will be created on how to use the React, please check.
+TL: use `npm start` on the frontend folder using cli
+
 
 ### Installing Piper TTS
 ```
@@ -128,6 +141,15 @@ Use on the terminal to select default mic
 ## Bootstrap
 - https://getbootstrap.com/docs/5.3/getting-started/introduction/
 - https://getbootstrap.com/docs/5.3/examples/
+
+## Gemini API
+```
+pip install google.generativeai
+pip install generativeai
+```
+
+### Get Gemini API key
+- https://ai.google.dev/
 
 ## For Search feature
 
