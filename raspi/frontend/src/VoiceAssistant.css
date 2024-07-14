@@ -1,0 +1,94 @@
+html, body {
+  height: 1920px;
+  width: 1080px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Import the Montserrat font */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/home/whizzy/.fonts/Montserrat-Bold.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Set the default font and text color */
+body {
+  font-family: 'Montserrat', sans-serif;
+  color: white;
+  margin: 0;
+  background-image: url('./bg5.png');
+}
+
+/* Styles for the main container */
+.voice-assistant-container {
+  background-image: url('./bg1.png');
+  background-size: cover;
+  background-position: center;
+  height: 300vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Styles for the label container */
+.label-container {
+  position: absolute;
+  top: 850px; /* Adjust the value to change the top position of the label */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 85%; /* Adjust the value to change the width of the label */
+  height: 375px; /* Set a fixed height for the label container */
+  border: none;
+  /* border: 2px solid white; */
+  display: flex; /* Add this line */
+  align-items: center; /* Add this line */
+  justify-content: center; /* Add this line */
+}
+
+/* Adjust the label size */
+.label-container span {
+  font-size: 60px; /* Adjust the value to change the font size of the label */
+  display: inline-block;
+  white-space: normal;
+  word-wrap: break-word;
+  text-align: center;
+  padding: 15px; /* Set the desired padding value here */
+}
+
+/* Styles for the GIF container */
+.gif-container {
+  position: absolute;
+  bottom: 30px; /* Adjust the value as needed */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.gif-container img {
+  height: 550px;
+}
+
+/* Add this to your VoiceAssistant.css file */
+.image-container {
+  position: absolute;
+  top: 100px; /* Adjust this value to position the image above the label container */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10; /* Ensure the image is above other elements */
+  width: 95%;
+  height: 700px;
+  /* border: 2px solid white; */
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+}
+
+.image-container img {
+  border-radius: 10px; /* Optional: add rounded corners */
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* This will maintain the aspect ratio */
+}
