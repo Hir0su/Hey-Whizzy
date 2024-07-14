@@ -151,6 +151,28 @@ pip install generativeai
 ### Get Gemini API key
 - https://ai.google.dev/
 
+## For Flask
+
+### Installation of Flask
+```
+pip install flask
+pip install Flask-MySQLdb
+pip install werkzeug
+pip install Flask-Mail
+```
+
+### Server preparation
+- Run xampp
+- Run raspi_flask.py
+
+### Changes made for flask to work on the network
+
+- Run xampp on administrator mode.
+- Allow python on the firewall (on searchbar "allow").
+- Change code on app.run(debug=True, host='0.0.0.0').
+- Make sure all devices (to be used) are connected on the same network.
+- Make sure that the requests has the right ip address pointer and port (ex. 192.168.0.15:5000)
+
 ## For Search feature
 
 ### Installation for Search
@@ -197,24 +219,3 @@ def preprocess_text(text):
 
     return preprocessed_text
 ```
-
-## For flask
-
-### Installation of Flask
-```
-pip install flask
-pip install Flask-MySQLdb
-pip install werkzeug
-pip install Flask-Mail
-```
-
-### Server preparation
-- Run xampp
-- Run raspi_flask.py
-
-### Changes made for flask to work on the network
-
-- Run xampp with administrator mode.
-- Allow python on the firewall (on searchbar "allow").
-- Change code on app.run(debug=True, host='0.0.0.0').
-- Make sure all devices (to be used) are connected on the same network.
